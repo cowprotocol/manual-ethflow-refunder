@@ -16,7 +16,7 @@ testing:
 export INFURA_KEY=
 export NETWORK=mainnet
 export ETHFLOW_TX_HASH=
-UNSET PRIVATE_KEY
+unset PRIVATE_KEY
 
 node refunder/script.js
 ```

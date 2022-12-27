@@ -4,14 +4,14 @@ require("dotenv").config();
 
 async function main() {
   const ethflow_address = "0x40a50cf069e992aa4536211b23f286ef88752187"; ///ethflow Contract
-  const network = process.env.NETWORK | "mainnet";
+  const network = process.env.NETWORK || "mainnet";
   const provider = new ethers.providers.InfuraProvider(
     network,
     process.env.INFURA_KEY
   );
   const contract = new ethers.Contract(ethflow_address, ABI, provider);
   const tx_hash =
-    process.env.ETHFLOW_TX_HASH |
+    process.env.ETHFLOW_TX_HASH ||
     "0x1416bc69abce952dc42578ea5bbeacd6dbbf15130d30d6305a686a2fb5a6690f";
   const tx = await provider.getTransaction(tx_hash);
   const receipt = await tx.wait();
@@ -22,7 +22,9 @@ async function main() {
   // Creating and sending the transaction object
   const new_raw_tx = {
     to: ethflow_address,
-    data: tx.data, // we reuse the same data from original tx, as this contains the correct ethflow order
+    // we reuse the same data from original tx, as this contains the correct ethflow order
+    // we only exchange the signature from createOrder to invalidateOrder
+    data: "0x7bc41b96".concat(tx.data.substring(10)).toString(),
     value: ethers.utils.parseUnits("0", "ether"),
   };
   // checks whether the gas is failing
