@@ -34,7 +34,7 @@ async function main() {
   const new_tx = await signer.sendTransaction(new_raw_tx);
   console.log("Mining transaction...");
   // Waiting for the transaction to be mined
-  const new_receipt = await tx.wait();
+  const new_receipt = await new_tx.wait();
   // The transaction is now on chain!
   console.log(`Mined transaction https://${network}.etherscan.io/tx/${new_receipt.transactionHash}`);
 }
