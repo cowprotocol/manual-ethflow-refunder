@@ -36,7 +36,8 @@ async function main() {
   // Waiting for the transaction to be mined
   const new_receipt = await new_tx.wait();
   // The transaction is now on chain!
-  console.log(`Mined transaction https://${network}.etherscan.io/tx/${new_receipt.transactionHash}`);
+  const network_prefix = network === "mainnet" ? "" : `${network}.`
+  console.log(`Mined transaction https://${network_prefix}etherscan.io/tx/${new_receipt.transactionHash}`);
 }
 
 main();
