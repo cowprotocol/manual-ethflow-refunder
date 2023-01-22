@@ -33,11 +33,11 @@ async function main() {
   const signer = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
   const new_tx = await signer.sendTransaction(new_raw_tx);
   console.log("Mining transaction...");
-  console.log(`https://${network}.etherscan.io/tx/${tx.hash}`);
   // Waiting for the transaction to be mined
-  const new_receipt = await tx.wait();
+  const new_receipt = await new_tx.wait();
   // The transaction is now on chain!
-  console.log(`Mined in block ${receipt.blockNumber}`);
+  const network_prefix = network === "mainnet" ? "" : `${network}.`
+  console.log(`Mined transaction https://${network_prefix}etherscan.io/tx/${new_receipt.transactionHash}`);
 }
 
 main();
