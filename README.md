@@ -10,7 +10,7 @@ yarn
 
 ### execution
 
-testing:
+In order to inspect only the transaction to be refunded, you can run:
 
 ```
 export INFURA_KEY=
@@ -18,10 +18,10 @@ export NETWORK=mainnet
 export ETHFLOW_TX_HASH=
 unset PRIVATE_KEY
 
-node refunder/script.js
+node script/refunder.js
 ```
 
-execution:
+and for running the actual execution, one has to provide the private key:
 
 ```
 export INFURA_KEY=
@@ -29,5 +29,5 @@ export NETWORK=mainnet
 export ETHFLOW_TX_HASH=
 export PRIVATE_KEY=
 
-node refunder/script.js
+node script/refunder.js
 ```
