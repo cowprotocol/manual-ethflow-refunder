@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+
+    <title>Manual EthFlow Refunder</title>
+    <style>
+      #refund .group {
+        margin-bottom: 0.2rem;
+      }
+      #refund label {
+        display: inline-block;
+        width: 11rem;
+        vertical-align: middle;
+      }
+      #refund input[type=text] {
+        font-family: monospace;
+        display: inline-block;
+        box-sizing: border-box;
+        height: 1.75rem;
+        width: 35rem;
+        vertical-align: middle;
+      }
+      #actions {
+        margin-top: 1rem;
+        box-sizing: border-box;
+        width: 46rem;
+      }
+      #actions button {
+        float: right;
+        margin-left: 1rem;
+        height: 1.75rem;
+        width: 6.4rem;
+      }
+    </style>
+  </head>
+
+  <body>
+    <form id="refund">
+      <div class="group">
+        <label for="transactionHash">Transaction Hash</label><!--
+     --><input type="text" id="transactionHash" value="0x0000000000000000000000000000000000000000000000000000000000000000">
+      </div>
+
+      <div id="actions">
+        <button type="button" id="execute">Refund</button>
+        <button type="button" id="simulate">Simulate</button>
+      </div>
+    </form>
+
+    <script data-src="index.js">
+    </script>
+  </body>
+</html>

@@ -1,7 +1,7 @@
 {
   "name": "refund-script",
   "version": "0.0.1",
-  "main": "index.js",
+  "private": true,
   "license": "MIT",
   "dependencies": {
     "dotenv": "^16.0.3",
