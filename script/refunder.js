@@ -3,21 +3,30 @@ const ABI = require("../abi/ethflow.json");
 require("dotenv").config();
 
 async function main() {
-  const ethflow_address = "0x40a50cf069e992aa4536211b23f286ef88752187"; ///ethflow Contract
   const network = process.env.NETWORK || "mainnet";
   const provider = new ethers.providers.InfuraProvider(
     network,
     process.env.INFURA_KEY
   );
-  const contract = new ethers.Contract(ethflow_address, ABI, provider);
   const tx_hash =
     process.env.ETHFLOW_TX_HASH ||
     "0x1416bc69abce952dc42578ea5bbeacd6dbbf15130d30d6305a686a2fb5a6690f";
   const tx = await provider.getTransaction(tx_hash);
   const receipt = await tx.wait();
   const iface = new ethers.utils.Interface(ABI);
-  const order = iface.parseLog(receipt.logs[0]).args.order;
-  console.log("trying to invalidate the following order:", order);
+  const log = receipt.logs[0];
+  const ethflow_address = ethers.utils.getAddress(log.address);
+  const order = iface.parseLog(log).args.order;
+  console.log(
+    `trying to invalidate the following order on eth-flow contract at ${ethflow_address}:`,
+    order
+  );
+
+  if (receipt.to.toLowerCase() !== ethflow_address.toLowerCase()) {
+    throw new Error(
+      "The eth-flow refunder script only works for direct interactions with the eth-flow contract. Refunds from complex transactions must be handled manually"
+    );
+  }
 
   // Creating and sending the transaction object
   const new_raw_tx = {
