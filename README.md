@@ -10,7 +10,7 @@ yarn
 
 ### execution
 
-In order to inspect only the transaction to be refunded, you can run:
+In order to inspect only the transaction to be refunded, you can run(error is expected in the output):
 
 ```
 export INFURA_KEY=
@@ -31,3 +31,5 @@ export PRIVATE_KEY=
 
 node script/refunder.js
 ```
+
+In case of gas estimation or any other node-related issue, use `NODE_URL` env variable to point to a different node(e.g. `rpc.mevblocker.io`).
