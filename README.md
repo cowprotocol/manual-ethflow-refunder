@@ -12,6 +12,8 @@ yarn
 
 In order to inspect only the transaction to be refunded, you can run(error is expected in the output):
 
+You can find the node URL in https://chainlist.org/
+
 ```
 export NODE_URL=
 export ETHFLOW_TX_HASH=
