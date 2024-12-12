@@ -4,9 +4,8 @@ require("dotenv").config();
 
 async function main() {
   const network = process.env.NETWORK || "mainnet";
-  const provider = new ethers.providers.InfuraProvider(
-    network,
-    process.env.INFURA_KEY
+  const provider = new ethers.providers.JsonRpcProvider(
+    process.env.NODE_URL,
   );
   const tx_hash =
     process.env.ETHFLOW_TX_HASH ||
