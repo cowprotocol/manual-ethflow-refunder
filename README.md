@@ -14,7 +14,6 @@ In order to inspect only the transaction to be refunded, you can run(error is ex
 
 ```
 export NODE_URL=
-export NETWORK=mainnet
 export ETHFLOW_TX_HASH=
 unset PRIVATE_KEY
 
@@ -25,7 +24,6 @@ and for running the actual execution, one has to provide the private key:
 
 ```
 export NODE_URL=
-export NETWORK=mainnet
 export ETHFLOW_TX_HASH=
 export PRIVATE_KEY=
 

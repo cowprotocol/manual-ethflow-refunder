@@ -3,7 +3,6 @@ const ABI = require("../abi/ethflow.json");
 require("dotenv").config();
 
 async function main() {
-  const network = process.env.NETWORK || "mainnet";
   const provider = new ethers.providers.JsonRpcProvider(
     process.env.NODE_URL,
   );
@@ -44,8 +43,7 @@ async function main() {
   // Waiting for the transaction to be mined
   const new_receipt = await new_tx.wait();
   // The transaction is now on chain!
-  const network_prefix = network === "mainnet" ? "" : `${network}.`
-  console.log(`Mined transaction https://${network_prefix}etherscan.io/tx/${new_receipt.transactionHash}`);
+  console.log(`Mined transaction (see in its corresponding block explorer): ${new_receipt.transactionHash}`);
 }
 
 main();
