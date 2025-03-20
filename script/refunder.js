@@ -12,12 +12,12 @@ async function main() {
   const tx = await provider.getTransaction(tx_hash);
   const receipt = await tx.wait();
   const iface = new ethers.utils.Interface(ABI);
-  const targetEventHash =
+  const order_placement_event_hash =
     "0xcf5f9de2984132265203b5c335b25727702ca77262ff622e136baa7362bf1da9";
-  const log = receipt.logs.find((log) => log.topics[0] === targetEventHash);
+  const log = receipt.logs.find((log) => log.topics[0] === order_placement_event_hash);
   if (!log) {
     throw new Error(
-      `No matching log found with event hash: ${targetEventHash}`
+      `No matching log found with the order placement event hash: ${order_placement_event_hash}`
     );
   }
   const ethflow_address = ethers.utils.getAddress(log.address);
@@ -32,10 +32,10 @@ async function main() {
       "⚠️ Warning: This transaction was not a direct interaction with the eth-flow contract!"
     );
 
-    const userResponse = await askForConfirmation(
+    const user_response = await askForConfirmation(
       "Do you want to proceed with the refund? (yes/no): "
     );
-    if (!userResponse) {
+    if (!user_response) {
       console.log("Refund process aborted by user.");
       return;
     }
@@ -72,7 +72,7 @@ async function askForConfirmation(question) {
   return new Promise((resolve) => {
     rl.question(question, (answer) => {
       rl.close();
-      resolve(yn(answer, { default: false })); // Converts 'y', 'yes', 'n', 'no' automatically
+      resolve(yn(answer, { default: false }));
     });
   });
 }
