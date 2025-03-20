@@ -4,6 +4,11 @@ const yn = require("yn").default;
 const ABI = require("../abi/ethflow.json");
 require("dotenv").config();
 
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+});
+
 async function main() {
   const provider = new ethers.providers.JsonRpcProvider(process.env.NODE_URL);
   const tx_hash =
@@ -14,7 +19,9 @@ async function main() {
   const iface = new ethers.utils.Interface(ABI);
   const order_placement_event_hash =
     "0xcf5f9de2984132265203b5c335b25727702ca77262ff622e136baa7362bf1da9";
-  const log = receipt.logs.find((log) => log.topics.includes(order_placement_event_hash));
+  const log = receipt.logs.find((log) =>
+    log.topics.includes(order_placement_event_hash)
+  );
   if (!log) {
     throw new Error(
       `No matching log found with the order placement event hash: ${order_placement_event_hash}`
@@ -47,8 +54,13 @@ async function main() {
     // we reuse the same data from original tx, as this contains the correct ethflow order
     // we only exchange the signature from createOrder to invalidateOrder
     data: "0x7bc41b96".concat(tx.data.substring(10)).toString(),
-    value: ethers.utils.parseUnits("0", "ether"),
+    value: "0x0",
   };
+  const accessList = await provider.send("eth_createAccessList", [
+    new_raw_tx,
+    "latest",
+  ]);
+  new_raw_tx.accessList = accessList.accessList;
   // checks whether the gas is failing
   const gas_estimation = await provider.estimateGas(new_raw_tx);
   // Creating a signing account from a private key
@@ -64,14 +76,8 @@ async function main() {
 }
 
 async function askForConfirmation(question) {
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
-
   return new Promise((resolve) => {
     rl.question(question, (answer) => {
-      rl.close();
       resolve(yn(answer, { default: false }));
     });
   });
