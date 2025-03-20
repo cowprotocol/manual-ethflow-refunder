@@ -1,18 +1,24 @@
 const ethers = require("ethers");
+const readline = require("readline");
 const ABI = require("../abi/ethflow.json");
 require("dotenv").config();
 
 async function main() {
-  const provider = new ethers.providers.JsonRpcProvider(
-    process.env.NODE_URL,
-  );
+  const provider = new ethers.providers.JsonRpcProvider(process.env.NODE_URL);
   const tx_hash =
     process.env.ETHFLOW_TX_HASH ||
     "0x1416bc69abce952dc42578ea5bbeacd6dbbf15130d30d6305a686a2fb5a6690f";
   const tx = await provider.getTransaction(tx_hash);
   const receipt = await tx.wait();
   const iface = new ethers.utils.Interface(ABI);
-  const log = receipt.logs[0];
+  const targetEventHash =
+    "0xcf5f9de2984132265203b5c335b25727702ca77262ff622e136baa7362bf1da9";
+  const log = receipt.logs.find((log) => log.topics.includes(targetEventHash));
+  if (!log) {
+    throw new Error(
+      `No matching log found with event hash: ${targetEventHash}`
+    );
+  }
   const ethflow_address = ethers.utils.getAddress(log.address);
   const order = iface.parseLog(log).args.order;
   console.log(
@@ -21,9 +27,17 @@ async function main() {
   );
 
   if (receipt.to.toLowerCase() !== ethflow_address.toLowerCase()) {
-    throw new Error(
-      "The eth-flow refunder script only works for direct interactions with the eth-flow contract. Refunds from complex transactions must be handled manually"
+    console.log(
+      "⚠️ Warning: This transaction was not a direct interaction with the eth-flow contract!"
     );
+
+    const userResponse = await askForConfirmation(
+      "Do you want to proceed with the refund? (yes/no): "
+    );
+    if (userResponse !== "yes") {
+      console.log("Refund process aborted by user.");
+      return;
+    }
   }
 
   // Creating and sending the transaction object
@@ -43,7 +57,23 @@ async function main() {
   // Waiting for the transaction to be mined
   const new_receipt = await new_tx.wait();
   // The transaction is now on chain!
-  console.log(`Mined transaction (see in its corresponding block explorer): ${new_receipt.transactionHash}`);
+  console.log(
+    `Mined transaction (see in its corresponding block explorer): ${new_receipt.transactionHash}`
+  );
+}
+
+async function askForConfirmation(question) {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  return new Promise((resolve) => {
+    rl.question(question, (answer) => {
+      rl.close();
+      resolve(answer.toLowerCase());
+    });
+  });
 }
 
 main();
