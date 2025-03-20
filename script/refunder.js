@@ -56,11 +56,11 @@ async function main() {
     data: "0x7bc41b96".concat(tx.data.substring(10)).toString(),
     value: "0x0",
   };
-  const accessList = await provider.send("eth_createAccessList", [
+  const access_list = await provider.send("eth_createAccessList", [
     new_raw_tx,
     "latest",
   ]);
-  new_raw_tx.accessList = accessList.accessList;
+  new_raw_tx.accessList = access_list.accessList;
   // checks whether the gas is failing
   const gas_estimation = await provider.estimateGas(new_raw_tx);
   // Creating a signing account from a private key
