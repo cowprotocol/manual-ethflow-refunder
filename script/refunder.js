@@ -1,5 +1,6 @@
 const ethers = require("ethers");
 const readline = require("readline");
+const yn = require("yn");
 const ABI = require("../abi/ethflow.json");
 require("dotenv").config();
 
@@ -34,7 +35,7 @@ async function main() {
     const userResponse = await askForConfirmation(
       "Do you want to proceed with the refund? (yes/no): "
     );
-    if (userResponse !== "yes") {
+    if (!userResponse) {
       console.log("Refund process aborted by user.");
       return;
     }
@@ -71,7 +72,7 @@ async function askForConfirmation(question) {
   return new Promise((resolve) => {
     rl.question(question, (answer) => {
       rl.close();
-      resolve(answer.toLowerCase());
+      resolve(yn(answer, { default: false })); // Converts 'y', 'yes', 'n', 'no' automatically
     });
   });
 }
