@@ -14,7 +14,7 @@ async function main() {
   const iface = new ethers.utils.Interface(ABI);
   const targetEventHash =
     "0xcf5f9de2984132265203b5c335b25727702ca77262ff622e136baa7362bf1da9";
-  const log = receipt.logs.find((log) => log.topics.includes(targetEventHash));
+  const log = receipt.logs.find((log) => log.topics[0] === targetEventHash);
   if (!log) {
     throw new Error(
       `No matching log found with event hash: ${targetEventHash}`
