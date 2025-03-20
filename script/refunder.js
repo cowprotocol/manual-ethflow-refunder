@@ -1,6 +1,6 @@
 const ethers = require("ethers");
 const readline = require("readline");
-const yn = require("yn");
+const yn = require("yn").default;
 const ABI = require("../abi/ethflow.json");
 require("dotenv").config();
 
