@@ -18,13 +18,9 @@ async function main() {
       log.topics[0] === order_placement_event_hash
   );
 
-  if (logs.length === 0) {
+  if (logs.length !== 1) {
     throw new Error(
-      `No matching log found with the order placement event hash: ${order_placement_event_hash}`
-    );
-  } else if (logs.length > 1) {
-    throw new Error(
-      `More than one log found with the order placement event hash: ${order_placement_event_hash}`
+      `Expected only 1 log with the OrderPlacement event, found ${logs.length}`
     );
   }
 
