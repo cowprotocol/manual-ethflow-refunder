@@ -36,10 +36,12 @@ async function main() {
   );
 
   const eth_flow_order_bytes = await getEthFlowOrderBytes(tx, ethflow_address);
+  // Make sure the EthFlowOrder can be parsed
   const [eth_flow_order] = ethers.utils.defaultAbiCoder.decode(
     [iface.getFunction("invalidateOrder").inputs[0]],
     "0x" + eth_flow_order_bytes
   );
+  // Encode the invalidateOrder function
   const invalidate_order_data = iface.encodeFunctionData("invalidateOrder", [
     eth_flow_order,
   ]);
@@ -63,7 +65,9 @@ async function main() {
 }
 
 async function getEthFlowOrderBytes(tx, ethflow_address) {
-  if (tx.to.toLowerCase() !== ethflow_address.toLowerCase()) {
+  if (tx.to.toLowerCase() === ethflow_address.toLowerCase()) {
+    return tx.data.substring(10);
+  } else {
     console.log(
       "Detected a tx that wasn't interacted with the ETHflow contract directly"
     );
@@ -74,10 +78,7 @@ async function getEthFlowOrderBytes(tx, ethflow_address) {
     }
 
     const order_start = create_order_index + CREATE_ORDER_SELECTOR.length;
-
     return tx.data.substring(order_start, order_start + ETHFLOW_ORDER_LENGTH);
-  } else {
-    return tx.data.substring(10);
   }
 }
 
