@@ -19,8 +19,10 @@ async function main() {
   const iface = new ethers.utils.Interface(ABI);
   const order_placement_event_hash =
     "0xcf5f9de2984132265203b5c335b25727702ca77262ff622e136baa7362bf1da9";
-  const log = receipt.logs.find((log) =>
-    log.topics.includes(order_placement_event_hash)
+  const log = receipt.logs.find(
+    (log) =>
+      // topic0 is required by the iface.parseLog() function
+      log.topics[0] === order_placement_event_hash
   );
   if (!log) {
     throw new Error(
@@ -48,18 +50,27 @@ async function main() {
     }
   }
 
+  const ethflow_order = ethers.utils.defaultAbiCoder.decode(
+    [iface.getFunction("invalidateOrder").inputs[0]],
+    log.data
+  );
+  const invalidate_order_data = iface.encodeFunctionData("invalidateOrder", [
+    ethflow_order.order,
+  ]);
+
   // Creating and sending the transaction object
   const new_raw_tx = {
     to: ethflow_address,
-    // we reuse the same data from original tx, as this contains the correct ethflow order
-    // we only exchange the signature from createOrder to invalidateOrder
-    data: "0x7bc41b96".concat(tx.data.substring(10)).toString(),
+    data: invalidate_order_data,
     value: "0x0",
   };
   const access_list = await provider.send("eth_createAccessList", [
     new_raw_tx,
     "latest",
   ]);
+  if (access_list.error) {
+    throw new Error("Error creating access list: " + access_list.error);
+  }
   new_raw_tx.accessList = access_list.accessList;
   // checks whether the gas is failing
   const gas_estimation = await provider.estimateGas(new_raw_tx);
