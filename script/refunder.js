@@ -2,6 +2,10 @@ const ethers = require("ethers");
 const ABI = require("../abi/ethflow.json");
 require("dotenv").config();
 
+const CREATE_ORDER_SELECTOR = "322bba21";
+const INVALIDATE_ORDER_SELECTOR = "7bc41b96";
+const ETHFLOW_ORDER_LENGTH = 576;
+
 async function main() {
   const provider = new ethers.providers.JsonRpcProvider(process.env.NODE_URL);
   const tx_hash =
@@ -32,18 +36,17 @@ async function main() {
     order
   );
 
-  const { gas_estimate_tx, raw_tx } = await buildInvalidateOrderTx({
-    ethflow_address,
-    tx,
-    log,
-    provider,
-    iface,
-  });
+  const eth_flow_order_bytes = await getEthFlowOrderBytes(tx, ethflow_address);
+  const new_raw_tx = {
+    to: ethflow_address,
+    data: "0x" + INVALIDATE_ORDER_SELECTOR + eth_flow_order_bytes,
+    value: ethers.utils.parseUnits("0", "ether"),
+  };
   // checks whether the gas is failing
-  const gas_estimation = await provider.estimateGas(gas_estimate_tx);
+  const gas_estimation = await provider.estimateGas(new_raw_tx);
   // Creating a signing account from a private key
   const signer = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
-  const new_tx = await signer.sendTransaction(raw_tx);
+  const new_tx = await signer.sendTransaction(new_raw_tx);
   console.log("Mining transaction...");
   // Waiting for the transaction to be mined
   const new_receipt = await new_tx.wait();
@@ -53,51 +56,22 @@ async function main() {
   );
 }
 
-async function buildInvalidateOrderTx({
-  tx,
-  ethflow_address,
-  log,
-  provider,
-  iface,
-}) {
+async function getEthFlowOrderBytes(tx, ethflow_address) {
   if (tx.to.toLowerCase() !== ethflow_address.toLowerCase()) {
     console.log(
       "Detected a tx that wasn't interacted with the ETHflow contract directly"
     );
 
-    const [order] = ethers.utils.defaultAbiCoder.decode(
-      [iface.getFunction("invalidateOrder").inputs[0]],
-      log.data
-    );
-
-    const invalidate_order_data = iface.encodeFunctionData("invalidateOrder", [
-      order,
-    ]);
-
-    const new_raw_tx = {
-      to: ethflow_address,
-      data: invalidate_order_data,
-      value: "0x0",
-    };
-
-    if (!process.env.PRIVATE_KEY) {
-      throw new Error(
-        "PRIVATE_KEY env variable is required to sign non-direct interaction tx"
-      );
+    const create_order_index = tx.data.indexOf(CREATE_ORDER_SELECTOR);
+    if (create_order_index === -1) {
+      throw new Error("createOrder function selector not found in tx.data.");
     }
 
-    const signer = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
-    const signed_tx = await signer.signTransaction(new_raw_tx);
+    const order_start = create_order_index + CREATE_ORDER_SELECTOR.length;
 
-    return { gas_estimate_tx: signed_tx, raw_tx: new_raw_tx };
+    return tx.data.substring(order_start, order_start + ETHFLOW_ORDER_LENGTH);
   } else {
-    const new_raw_tx = {
-      to: ethflow_address,
-      data: "0x7bc41b96" + tx.data.substring(10),
-      value: ethers.utils.parseUnits("0", "ether"),
-    };
-
-    return { gas_estimate_tx: new_raw_tx, raw_tx: new_raw_tx };
+    return tx.data.substring(10);
   }
 }
 
