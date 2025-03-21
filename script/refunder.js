@@ -69,7 +69,7 @@ async function getEthFlowOrderBytes(tx, ethflow_address) {
     return tx.data.substring(10);
   } else {
     console.log(
-      "Detected a tx that wasn't interacted with the ETHflow contract directly"
+      "Detected a tx that interacted with the ETHFlow contract indirectly"
     );
 
     const create_order_index = tx.data.indexOf(CREATE_ORDER_SELECTOR);
