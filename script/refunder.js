@@ -46,6 +46,7 @@ async function main() {
   // checks whether the gas is failing
   const gas_estimation = await provider.estimateGas(gas_estimate_tx);
   // Creating a signing account from a private key
+  const signer = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
   const new_tx = await signer.sendTransaction(raw_tx);
   console.log("Mining transaction...");
   // Waiting for the transaction to be mined
