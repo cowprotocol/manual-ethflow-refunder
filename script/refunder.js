@@ -3,7 +3,6 @@ const ABI = require("../abi/ethflow.json");
 require("dotenv").config();
 
 const CREATE_ORDER_SELECTOR = "322bba21";
-const INVALIDATE_ORDER_SELECTOR = "7bc41b96";
 const ETHFLOW_ORDER_LENGTH = 576;
 
 async function main() {
@@ -37,9 +36,16 @@ async function main() {
   );
 
   const eth_flow_order_bytes = await getEthFlowOrderBytes(tx, ethflow_address);
+  const [eth_flow_order] = ethers.utils.defaultAbiCoder.decode(
+    [iface.getFunction("invalidateOrder").inputs[0]],
+    "0x" + eth_flow_order_bytes
+  );
+  const invalidate_order_data = iface.encodeFunctionData("invalidateOrder", [
+    eth_flow_order,
+  ]);
   const new_raw_tx = {
     to: ethflow_address,
-    data: "0x" + INVALIDATE_ORDER_SELECTOR + eth_flow_order_bytes,
+    data: invalidate_order_data,
     value: ethers.utils.parseUnits("0", "ether"),
   };
   // checks whether the gas is failing
