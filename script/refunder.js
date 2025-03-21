@@ -64,18 +64,11 @@ async function main() {
     data: invalidate_order_data,
     value: "0x0",
   };
-  const access_list = await provider.send("eth_createAccessList", [
-    new_raw_tx,
-    "latest",
-  ]);
-  if (access_list.error) {
-    throw new Error("Error creating access list: " + access_list.error);
-  }
-  new_raw_tx.accessList = access_list.accessList;
-  // checks whether the gas is failing
-  const gas_estimation = await provider.estimateGas(new_raw_tx);
-  // Creating a signing account from a private key
   const signer = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
+  const signed_tx = await signer.signTransaction(new_raw_tx);
+  // checks whether the gas is failing
+  const gas_estimation = await provider.estimateGas(signed_tx);
+  // Creating a signing account from a private key
   const new_tx = await signer.sendTransaction(new_raw_tx);
   console.log("Mining transaction...");
   // Waiting for the transaction to be mined
