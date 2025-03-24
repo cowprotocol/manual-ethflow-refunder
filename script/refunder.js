@@ -2,9 +2,6 @@ const ethers = require("ethers");
 const ABI = require("../abi/ethflow.json");
 require("dotenv").config();
 
-const CREATE_ORDER_SELECTOR = "322bba21";
-const ETHFLOW_ORDER_LENGTH = 576;
-
 async function main() {
   const provider = new ethers.providers.JsonRpcProvider(process.env.NODE_URL);
   const tx_hash =
@@ -29,21 +26,30 @@ async function main() {
 
   const log = logs[0];
   const ethflow_address = ethers.utils.getAddress(log.address);
+  // GPv2Order.Data: https://github.com/cowprotocol/ethflowcontract/blob/main/src/vendored/GPv2Order.sol#L18-L31
   const order = iface.parseLog(log).args.order;
   console.log(
     `trying to invalidate the following order on eth-flow contract at ${ethflow_address}:`,
     order
   );
+  // EthFlowOrder.Data: https://github.com/cowprotocol/ethflowcontract/blob/main/src/libraries/EthFlowOrder.sol#L19-L45
+  const ethflow_order = {
+    buyToken: order.buyToken,
+    receiver: order.receiver,
+    sellAmount: order.sellAmount,
+    buyAmount: order.buyAmount,
+    appData: order.appData,
+    feeAmount: order.feeAmount,
+    validTo: order.validTo,
+    partiallyFillable: order.partiallyFillable,
+    // The parsed GPv2Order doesn't contain this field, which doesn't participate in the hash function,
+    // so it can be set to defaults.
+    quoteId: 0,
+  };
 
-  const eth_flow_order_bytes = await getEthFlowOrderBytes(tx, ethflow_address);
-  // Make sure the EthFlowOrder can be parsed
-  const [eth_flow_order] = ethers.utils.defaultAbiCoder.decode(
-    [iface.getFunction("invalidateOrder").inputs[0]],
-    "0x" + eth_flow_order_bytes
-  );
   // Encode the invalidateOrder function
   const invalidate_order_data = iface.encodeFunctionData("invalidateOrder", [
-    eth_flow_order,
+    ethflow_order,
   ]);
   const new_raw_tx = {
     to: ethflow_address,
@@ -62,24 +68,6 @@ async function main() {
   console.log(
     `Mined transaction (see in its corresponding block explorer): ${new_receipt.transactionHash}`
   );
-}
-
-async function getEthFlowOrderBytes(tx, ethflow_address) {
-  if (tx.to.toLowerCase() === ethflow_address.toLowerCase()) {
-    return tx.data.substring(10);
-  } else {
-    console.log(
-      "Detected a tx that interacted with the ETHFlow contract indirectly"
-    );
-
-    const create_order_index = tx.data.indexOf(CREATE_ORDER_SELECTOR);
-    if (create_order_index === -1) {
-      throw new Error("createOrder function selector not found in tx.data.");
-    }
-
-    const order_start = create_order_index + CREATE_ORDER_SELECTOR.length;
-    return tx.data.substring(order_start, order_start + ETHFLOW_ORDER_LENGTH);
-  }
 }
 
 main();
