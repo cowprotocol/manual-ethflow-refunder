@@ -14,7 +14,7 @@ async function main() {
     "0xcf5f9de2984132265203b5c335b25727702ca77262ff622e136baa7362bf1da9";
   const logs = receipt.logs.filter(
     (log) =>
-      // topic0 is required by the iface.parseLog() function
+      // iface.parseLog() cares only about the topic0
       log.topics[0] === order_placement_event_hash
   );
 
