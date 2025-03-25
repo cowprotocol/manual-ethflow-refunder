@@ -3,35 +3,57 @@ const ABI = require("../abi/ethflow.json");
 require("dotenv").config();
 
 async function main() {
-  const provider = new ethers.providers.JsonRpcProvider(
-    process.env.NODE_URL,
-  );
+  const provider = new ethers.providers.JsonRpcProvider(process.env.NODE_URL);
   const tx_hash =
     process.env.ETHFLOW_TX_HASH ||
     "0x1416bc69abce952dc42578ea5bbeacd6dbbf15130d30d6305a686a2fb5a6690f";
   const tx = await provider.getTransaction(tx_hash);
   const receipt = await tx.wait();
   const iface = new ethers.utils.Interface(ABI);
-  const log = receipt.logs[0];
+  const order_placement_event_hash =
+    "0xcf5f9de2984132265203b5c335b25727702ca77262ff622e136baa7362bf1da9";
+  const logs = receipt.logs.filter(
+    (log) =>
+      // iface.parseLog() cares only about the topic0
+      log.topics[0] === order_placement_event_hash
+  );
+
+  if (logs.length !== 1) {
+    throw new Error(
+      `Expected only 1 log with the OrderPlacement event, found ${logs.length}`
+    );
+  }
+
+  const log = logs[0];
   const ethflow_address = ethers.utils.getAddress(log.address);
+  // GPv2Order.Data: https://github.com/cowprotocol/ethflowcontract/blob/main/src/vendored/GPv2Order.sol#L18-L31
   const order = iface.parseLog(log).args.order;
   console.log(
     `trying to invalidate the following order on eth-flow contract at ${ethflow_address}:`,
     order
   );
+  // EthFlowOrder.Data: https://github.com/cowprotocol/ethflowcontract/blob/main/src/libraries/EthFlowOrder.sol#L19-L45
+  const ethflow_order = {
+    buyToken: order.buyToken,
+    receiver: order.receiver,
+    sellAmount: order.sellAmount,
+    buyAmount: order.buyAmount,
+    appData: order.appData,
+    feeAmount: order.feeAmount,
+    validTo: order.validTo,
+    partiallyFillable: order.partiallyFillable,
+    // The parsed GPv2Order doesn't contain this field, which doesn't participate in the hash function,
+    // so it can be set to defaults.
+    quoteId: 0,
+  };
 
-  if (receipt.to.toLowerCase() !== ethflow_address.toLowerCase()) {
-    throw new Error(
-      "The eth-flow refunder script only works for direct interactions with the eth-flow contract. Refunds from complex transactions must be handled manually"
-    );
-  }
-
-  // Creating and sending the transaction object
+  // Encode the invalidateOrder function
+  const invalidate_order_data = iface.encodeFunctionData("invalidateOrder", [
+    ethflow_order,
+  ]);
   const new_raw_tx = {
     to: ethflow_address,
-    // we reuse the same data from original tx, as this contains the correct ethflow order
-    // we only exchange the signature from createOrder to invalidateOrder
-    data: "0x7bc41b96".concat(tx.data.substring(10)).toString(),
+    data: invalidate_order_data,
     value: ethers.utils.parseUnits("0", "ether"),
   };
   // checks whether the gas is failing
@@ -43,7 +65,9 @@ async function main() {
   // Waiting for the transaction to be mined
   const new_receipt = await new_tx.wait();
   // The transaction is now on chain!
-  console.log(`Mined transaction (see in its corresponding block explorer): ${new_receipt.transactionHash}`);
+  console.log(
+    `Mined transaction (see in its corresponding block explorer): ${new_receipt.transactionHash}`
+  );
 }
 
 main();
