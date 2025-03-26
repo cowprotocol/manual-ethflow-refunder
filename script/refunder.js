@@ -58,6 +58,10 @@ async function main() {
   };
   // checks whether the gas is failing
   const gas_estimation = await provider.estimateGas(new_raw_tx);
+
+  if (!process.env.PRIVATE_KEY) {
+    throw new Error("In order to send a transaction, a PRIVATE_KEY must be provided");
+  }
   // Creating a signing account from a private key
   const signer = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
   const new_tx = await signer.sendTransaction(new_raw_tx);
