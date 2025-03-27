@@ -3,7 +3,14 @@ const ABI = require("../abi/ethflow.json");
 require("dotenv").config();
 
 async function main() {
-  const provider = new ethers.providers.JsonRpcProvider(process.env.NODE_URL);
+  const NODE_URL = process.env.NODE_URL;
+  const ETHFLOW_TX_HASH = process.env.ETHFLOW_TX_HASH;
+
+  if (!NODE_URL || !ETHFLOW_TX_HASH) {
+    throw new Error("Both NODE_URL and ETHFLOW_TX_HASH must be provided");
+  }
+
+  const provider = new ethers.providers.JsonRpcProvider(NODE_URL);
   const tx_hash =
     process.env.ETHFLOW_TX_HASH ||
     "0x1416bc69abce952dc42578ea5bbeacd6dbbf15130d30d6305a686a2fb5a6690f";
@@ -58,8 +65,15 @@ async function main() {
   };
   // checks whether the gas is failing
   const gas_estimation = await provider.estimateGas(new_raw_tx);
+
+  let private_key = process.env.PRIVATE_KEY;
+  if (!private_key) {
+    throw new Error(
+      "In order to send a transaction, a PRIVATE_KEY must be provided"
+    );
+  }
   // Creating a signing account from a private key
-  const signer = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
+  const signer = new ethers.Wallet(private_key, provider);
   const new_tx = await signer.sendTransaction(new_raw_tx);
   console.log("Mining transaction...");
   // Waiting for the transaction to be mined
