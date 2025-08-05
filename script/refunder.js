@@ -10,13 +10,13 @@ async function main() {
     throw new Error("Both NODE_URL and ETHFLOW_TX_HASH must be provided");
   }
 
-  const provider = new ethers.providers.JsonRpcProvider(NODE_URL);
+  const provider = new ethers.JsonRpcProvider(NODE_URL);
   const tx_hash =
     process.env.ETHFLOW_TX_HASH ||
     "0x1416bc69abce952dc42578ea5bbeacd6dbbf15130d30d6305a686a2fb5a6690f";
   const tx = await provider.getTransaction(tx_hash);
   const receipt = await tx.wait();
-  const iface = new ethers.utils.Interface(ABI);
+  const iface = new ethers.Interface(ABI);
   const order_placement_event_hash =
     "0xcf5f9de2984132265203b5c335b25727702ca77262ff622e136baa7362bf1da9";
   const logs = receipt.logs.filter(
@@ -32,7 +32,7 @@ async function main() {
   }
 
   const log = logs[0];
-  const ethflow_address = ethers.utils.getAddress(log.address);
+  const ethflow_address = ethers.getAddress(log.address);
   // GPv2Order.Data: https://github.com/cowprotocol/ethflowcontract/blob/main/src/vendored/GPv2Order.sol#L18-L31
   const order = iface.parseLog(log).args.order;
   console.log(
@@ -61,7 +61,7 @@ async function main() {
   const new_raw_tx = {
     to: ethflow_address,
     data: invalidate_order_data,
-    value: ethers.utils.parseUnits("0", "ether"),
+    value: ethers.parseUnits("0", "ether"),
   };
   // checks whether the gas is failing
   const gas_estimation = await provider.estimateGas(new_raw_tx);
@@ -80,7 +80,7 @@ async function main() {
   const new_receipt = await new_tx.wait();
   // The transaction is now on chain!
   console.log(
-    `Mined transaction (see in its corresponding block explorer): ${new_receipt.transactionHash}`
+    `Mined transaction (see in its corresponding block explorer): ${new_receipt.hash}`
   );
 }
 
